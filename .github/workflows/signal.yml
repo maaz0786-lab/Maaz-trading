@@ -45,7 +45,17 @@ jobs:
         DRY_RUN: ${{ vars.DRY_RUN || 'true' }}
         RISK_USDT: ${{ vars.RISK_USDT || '10' }}
         MAX_NOTIONAL: ${{ vars.MAX_NOTIONAL || '100' }}
-      run: python github_signal/signal_engine.py
+      run: |
+          set +e
+          python github_signal/signal_engine.py 2>engine_err.txt
+          RC=$?
+          echo "exit_code=$RC"
+          if [ $RC -ne 0 ]; then
+            echo "--- ERROR STDERR ---"
+            cat engine_err.txt
+            echo "--- END ---"
+            exit $RC
+          fi
 
     - name: Commit state + journal
       run: |
