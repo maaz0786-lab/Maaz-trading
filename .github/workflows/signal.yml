@@ -34,7 +34,7 @@ jobs:
 
     - name: Install Python packages
       run: |
-        pip install "numpy<2" TA-Lib==0.4.31 pandas requests
+        pip install TA-Lib==0.4.31 pandas numpy requests
 
     - name: Run signal engine
       env:
@@ -58,7 +58,6 @@ jobs:
           fi
 
     - name: Commit state + journal
-      continue-on-error: true
       run: |
         git config user.name "signal-bot"
         git config user.email "signal-bot@users.noreply.github.com"
