@@ -45,7 +45,7 @@ jobs:
         DRY_RUN: ${{ vars.DRY_RUN || 'true' }}
         RISK_USDT: ${{ vars.RISK_USDT || '10' }}
         MAX_NOTIONAL: ${{ vars.MAX_NOTIONAL || '100' }}
-      run: python signal_engine.py
+      run: python github_signal/signal_engine.py
 
     - name: Commit state + journal
       run: |

@@ -17,7 +17,7 @@ import numpy as np
 import pandas as pd
 
 HERE = Path(__file__).parent
-BACKEND = HERE / "backend"
+BACKEND = HERE.parent / "backend"
 sys.path.insert(0, str(BACKEND))
 
 STATE_FILE = HERE / "state.json"
