@@ -58,6 +58,7 @@ jobs:
           fi
 
     - name: Commit state + journal
+      continue-on-error: true
       run: |
         git config user.name "signal-bot"
         git config user.email "signal-bot@users.noreply.github.com"
