@@ -42,15 +42,24 @@ TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN", "")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
 DRY_RUN = os.environ.get("DRY_RUN", "true").lower() == "true"
 
-BINANCE_BASE = "https://fapi.binance.com"
+BINANCE_BASES = ["https://testnet.binancefuture.com", "https://fapi.binance.com", "https://api.binance.com"]
 
 
-def _get(url, params=None, timeout=15):
-    if params:
-        url += "?" + urllib.parse.urlencode(params)
-    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        return json.loads(r.read())
+def _get(path, params=None, timeout=15):
+    last_err = None
+    for base in BINANCE_BASES:
+        url = base + path
+        if params:
+            url += "?" + urllib.parse.urlencode(params)
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                return json.loads(r.read())
+        except Exception as e:
+            last_err = e
+            print(f"[engine] {base} failed: {e}")
+            continue
+    raise last_err
 
 
 def _signed(method, path, params=None, timeout=15):
@@ -59,15 +68,23 @@ def _signed(method, path, params=None, timeout=15):
     params["recvWindow"] = 10000
     qs = urllib.parse.urlencode(sorted(params.items()))
     sig = hmac.new(BINANCE_SECRET.encode(), qs.encode(), hashlib.sha256).hexdigest()
-    url = f"{BINANCE_BASE}{path}?{qs}&signature={sig}"
-    req = urllib.request.Request(url, method=method, headers={
-        "X-MBX-APIKEY": BINANCE_KEY, "User-Agent": "Mozilla/5.0"})
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        return json.loads(r.read())
+    last_err = None
+    for base in BINANCE_BASES:
+        url = f"{base}{path}?{qs}&signature={sig}"
+        try:
+            req = urllib.request.Request(url, method=method, headers={
+                "X-MBX-APIKEY": BINANCE_KEY, "User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                return json.loads(r.read())
+        except Exception as e:
+            last_err = e
+            print(f"[engine] {base} failed: {e}")
+            continue
+    raise last_err
 
 
 def fetch_klines(interval, limit=500):
-    rows = _get(f"{BINANCE_BASE}/fapi/v1/klines",
+    rows = _get("/fapi/v1/klines",
                 {"symbol": "ETHUSDT", "interval": interval, "limit": limit})
     data = [{"open": float(r[1]), "high": float(r[2]), "low": float(r[3]),
              "close": float(r[4]), "volume": float(r[5])} for r in rows]
@@ -78,7 +95,7 @@ def fetch_klines(interval, limit=500):
 
 
 def get_eth_price():
-    t = _get(f"{BINANCE_BASE}/fapi/v1/ticker/price", {"symbol": "ETHUSDT"})
+    t = _get("/fapi/v1/ticker/price", {"symbol": "ETHUSDT"})
     return float(t["price"])
 
 
