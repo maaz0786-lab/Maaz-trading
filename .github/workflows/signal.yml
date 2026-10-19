@@ -34,7 +34,7 @@ jobs:
 
     - name: Install Python packages
       run: |
-        pip install TA-Lib==0.4.31 pandas numpy requests
+        pip install "numpy<2" TA-Lib==0.4.31 pandas requests
 
     - name: Run signal engine
       env:
